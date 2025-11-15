@@ -1,0 +1,634 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Salud y enfermedad — Escuela 711 Federico Brandsen</title>
+  <meta name="description" content="IMC y TMB con gráficos dinámicos, hábitos y prevención. Proyecto 2° año 1° división, Escuela Provincial N° 711 — Comodoro Rivadavia." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5.0.7/400.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5.0.7/600.css">
+  <style>
+    :root{
+      --bordo:#7a1f2b;        /* Bordó institucional */
+      --bordo-dark:#611923;
+      --bordo-50:#f7eef0;
+      --white:#ffffff;
+      --ink:#222222;
+      --muted:#666666;
+      --ok:#1e8e3e;
+      --warn:#f5a623;
+      --risk:#d0021b;
+      --bg:#ffffff;
+      --card:#ffffff;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color:var(--ink);
+      background:linear-gradient(180deg, var(--bordo-50) 0%, var(--white) 28%, var(--white) 100%);
+    }
+    header{
+      background:var(--white);
+      border-bottom:4px solid var(--bordo);
+      position:sticky; top:0; z-index:10;
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:16px 20px}
+    .brand{
+      display:flex; align-items:center; gap:16px;
+    }
+    .logo{
+      width:56px; height:56px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, var(--bordo), var(--bordo-dark));
+      box-shadow: var(--shadow);
+      position:relative; overflow:hidden;
+    }
+    .logo::after{
+      content:"711"; color:#fff; font-weight:600; font-size:18px;
+      position:absolute; bottom:8px; right:10px; letter-spacing:1px;
+    }
+    .title{
+      line-height:1.2;
+    }
+    .title h1{margin:0; font-size:20px; font-weight:600; color:var(--bordo-dark)}
+    .title p{margin:2px 0 0; color:var(--muted); font-size:14px}
+
+    main{padding:24px 20px}
+    .grid{
+      display:grid; grid-template-columns:1fr 1fr; gap:24px;
+    }
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+    .card{
+      background:var(--card);
+      border:1px solid #eee;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:20px;
+    }
+    .card h2{
+      margin:0 0 12px; font-size:18px; color:var(--bordo-dark);
+    }
+    .card h3{margin:16px 0 10px; font-size:16px; color:var(--bordo)}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width:600px){ .row{grid-template-columns:1fr} }
+    label{font-weight:600; font-size:14px; color:var(--ink)}
+    .help{font-size:12px; color:var(--muted)}
+    input, select{
+      width:100%;
+      padding:12px 12px;
+      border:1px solid #ddd; border-radius:12px;
+      outline:none; background:#fff; color:var(--ink);
+    }
+    input:focus, select:focus{border-color:var(--bordo)}
+    .unit{font-size:12px; color:var(--muted); margin-left:6px}
+    .actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px}
+    button{
+      padding:10px 14px; border-radius:12px; border:1px solid var(--bordo);
+      background:var(--bordo); color:#fff; font-weight:600; cursor:pointer;
+      transition:.2s transform ease, .2s background-color ease;
+    }
+    button.secondary{background:#fff; color:var(--bordo); border-color:var(--bordo)}
+    button.ghost{background:#fff; color:var(--ink); border-color:#ddd}
+    button:hover{transform:translateY(-1px)}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border-radius:999px; padding:8px 12px; border:1px solid #eee; background:#fff; color:var(--ink);
+    }
+    .stat{
+      display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;
+    }
+    .stat .box{
+      border:1px solid #eee; border-radius:12px; padding:12px; background:#fff;
+    }
+    .box .value{font-size:22px; font-weight:600}
+    .badge{
+      display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:600;
+    }
+    .badge.ok{background:#e8f5e9; color:var(--ok)}
+    .badge.warn{background:#fff5e6; color:var(--warn)}
+    .badge.risk{background:#fdecea; color:var(--risk)}
+    .legend{font-size:12px; color:var(--muted)}
+    .separator{height:1px; background:#eee; margin:12px 0}
+    .list{display:grid; gap:10px}
+    .list .item{display:flex; align-items:flex-start; gap:12px}
+    .dot{
+      width:12px; height:12px; border-radius:50%;
+      background:var(--bordo); margin-top:4px;
+    }
+    footer{
+      margin-top:28px; padding:24px 20px; background:var(--white);
+      border-top:4px solid var(--bordo);
+    }
+    .small{font-size:12px; color:var(--muted)}
+    .notice{
+      background:#fff; border:1px dashed var(--bordo); color:var(--bordo);
+      border-radius:12px; padding:12px; font-size:13px; margin-top:8px;
+    }
+    .kpi{
+      display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;
+    }
+    .kpi .pill{border-color:#ddd}
+    .sr-only{position:absolute !important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px)}
+    .header-cta{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    /* Chart container styling */
+    .chart-wrap{display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px}
+    canvas{width:100% !important; height:300px !important}
+  </style>
+</head>
+<body>
+  <header aria-label="Encabezado institucional">
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">
+          <h1>Escuela Provincial N° 711 “Federico Brandsen” — Comodoro Rivadavia</h1>
+          <p>Proyecto interdisciplinario: Salud y enfermedad • 2° año 1° división</p>
+          <div class="header-cta">
+            <button class="secondary" id="btnExport">Exportar datos</button>
+            <button class="secondary" id="btnPrint">Imprimir</button>
+            <button class="ghost" id="btnReset">Limpiar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" role="main">
+    <div class="grid">
+      <!-- Panel de ingreso de datos -->
+      <section class="card" aria-labelledby="form-title">
+        <h2 id="form-title">Datos personales y cálculo</h2>
+        <p class="help">Completa tus datos para calcular IMC y TMB. Puedes guardar y comparar escenarios (ej. cambios de hábitos).</p>
+
+        <div class="row" role="form">
+          <div>
+            <label for="weight">Peso <span class="unit">(kg)</span></label>
+            <input id="weight" name="weight" type="number" inputmode="decimal" min="20" max="300" step="0.1" placeholder="Ej: 68.5" aria-describedby="w-help">
+            <div id="w-help" class="help">Entre 20 y 300 kg.</div>
+          </div>
+          <div>
+            <label for="height">Estatura <span class="unit">(cm)</span></label>
+            <input id="height" name="height" type="number" inputmode="decimal" min="120" max="230" step="0.1" placeholder="Ej: 172.0" aria-describedby="h-help">
+            <div id="h-help" class="help">Entre 120 y 230 cm.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="age">Edad <span class="unit">(años)</span></label>
+            <input id="age" name="age" type="number" inputmode="numeric" min="12" max="100" step="1" placeholder="Ej: 15">
+          </div>
+          <div>
+            <label for="sex">Género</label>
+            <select id="sex" name="sex">
+              <option value="" selected disabled>Selecciona…</option>
+              <option value="female">Femenino</option>
+              <option value="male">Masculino</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="btnCalc">Calcular</button>
+          <button class="secondary" id="btnSave">Guardar escenario</button>
+          <button class="ghost" id="btnSample">Cargar ejemplo</button>
+        </div>
+
+        <div class="separator" role="presentation"></div>
+
+        <div class="stat" aria-live="polite">
+          <div class="box">
+            <div class="value" id="imcValue">—</div>
+            <div class="legend">IMC (Índice de Masa Corporal)</div>
+            <div id="imcTag" class="badge">—</div>
+          </div>
+          <div class="box">
+            <div class="value" id="tmbValue">—</div>
+            <div class="legend">TMB (Tasa Metabólica Basal, kcal/día)</div>
+            <div class="kpi">
+              <span class="pill"><strong>Ligera:</strong> <span id="kcalLight">—</span> kcal</span>
+              <span class="pill"><strong>Moderada:</strong> <span id="kcalModerate">—</span> kcal</span>
+              <span class="pill"><strong>Intensa:</strong> <span id="kcalIntense">—</span> kcal</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="notice" role="note">
+          Los cálculos usan fórmulas estándar: IMC = peso (kg) / [estatura (m)]². TMB (Mifflin–St Jeor): Masculino = 10·kg + 6.25·cm − 5·edad + 5; Femenino = 10·kg + 6.25·cm − 5·edad − 161.
+        </div>
+      </section>
+
+      <!-- Panel de visualización y análisis -->
+      <section class="card" aria-labelledby="viz-title">
+        <h2 id="viz-title">Gráficos dinámicos y análisis</h2>
+
+        <div class="chart-wrap">
+          <canvas id="chartIMC" aria-label="Gráfico de IMC vs. categorías" role="img"></canvas>
+          <canvas id="chartTMB" aria-label="Gráfico de TMB y gasto estimado" role="img"></canvas>
+        </div>
+
+        <h3>Cómo estos índices impactan en salud y calidad de vida</h3>
+        <div class="list" id="healthImpact">
+          <!-- Items generados dinámicamente -->
+        </div>
+
+        <h3>Riesgo de enfermedad por malos hábitos</h3>
+        <div class="list">
+          <div class="item"><div class="dot"></div><div><strong>Sedentarismo:</strong> eleva IMC y reduce capacidad cardiorrespiratoria, aumentando riesgo de hipertensión y diabetes tipo 2.</div></div>
+          <div class="item"><div class="dot"></div><div><strong>Dieta alta en ultraprocesados:</strong> mayor carga calórica con baja calidad nutricional, favoreciendo sobrepeso y dislipidemias.</div></div>
+          <div class="item"><div class="dot"></div><div><strong>Privación de sueño:</strong> altera hormonas del apetito (hambre/ saciedad), incrementa ingesta y dificulta el control del peso.</div></div>
+          <div class="item"><div class="dot"></div><div><strong>Tabaquismo y alcohol en exceso:</strong> impacto cardiovascular y hepático, empeoran recuperación y rendimiento físico.</div></div>
+        </div>
+
+        <h3>Sugerencias prácticas de cambio de hábitos</h3>
+        <div class="list">
+          <div class="item"><div class="dot"></div><div><strong>Movimiento diario:</strong> 30–45 min de actividad moderada (caminar rápido, bici) 5 días a la semana. Progresar gradualmente.</div></div>
+          <div class="item"><div class="dot"></div><div><strong>Plato equilibrado:</strong> mitad vegetales, 1/4 proteínas magras, 1/4 carbohidratos integrales; agua como bebida principal.</div></div>
+          <div class="item"><div class="dot"></div><div><strong>Rutina de sueño:</strong> 8–10 horas en adolescentes, horarios regulares, sin pantallas 60 minutos antes de dormir.</div></div>
+          <div class="item"><div class="dot"></div><div><strong>Ambiente saludable:</strong> planificar colaciones nutritivas y limitar ultraprocesados a ocasiones puntuales.</div></div>
+          <div class="item"><div class="dot"></div><div><strong>Acompañamiento:</strong> ante dudas de salud, consultar profesionales. La información aquí es educativa.</div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Escenarios guardados y comparaciones -->
+    <section class="card" aria-labelledby="scn-title" style="margin-top:24px">
+      <h2 id="scn-title">Escenarios guardados y comparación</h2>
+      <p class="help">Guarda diferentes configuraciones (por ejemplo, “antes” y “después”) y compara sus gráficos.</p>
+      <div class="actions">
+        <button class="secondary" id="btnOverlay">Superponer gráficos</button>
+        <button class="ghost" id="btnClearSaved">Borrar guardados</button>
+      </div>
+      <div id="savedList" class="list" style="margin-top:12px"></div>
+    </section>
+
+    <!-- Metodología y contenido educativo -->
+    <section class="card" aria-labelledby="edu-title" style="margin-top:24px">
+      <h2 id="edu-title">Metodología educativa y marco conceptual</h2>
+      <h3>Interpretación del IMC</h3>
+      <div class="list">
+        <div class="item"><div class="dot"></div><div><strong>Bajo peso:</strong> IMC &lt; 18.5 — Riesgo por déficit energético y micronutrientes.</div></div>
+        <div class="item"><div class="dot"></div><div><strong>Normal:</strong> 18.5–24.9 — Rango asociado a menor riesgo metabólico.</div></div>
+        <div class="item"><div class="dot"></div><div><strong>Sobrepeso:</strong> 25–29.9 — Señal de exceso calórico sostenido.</div></div>
+        <div class="item"><div class="dot"></div><div><strong>Obesidad:</strong> ≥ 30 — Riesgo elevado de enfermedad cardiometabólica.</div></div>
+      </div>
+
+      <h3>Sobre la TMB y el gasto energético</h3>
+      <p class="help">La TMB estima energía mínima diaria. El gasto total depende del nivel de actividad. Aquí mostramos presupuestos calóricos aproximados para actividad ligera, moderada e intensa.</p>
+    </section>
+  </main>
+
+  <footer aria-label="Pie institucional">
+    <div class="wrap">
+      <div class="small">Proyecto didáctico: 2° año 1° división • Escuela Provincial N° 711 “Federico Brandsen” • Comodoro Rivadavia, Chubut.</div>
+      <div class="small">Tema: blanco y bordó. Diseño accesible, responsivo y listo para GitHub Pages.</div>
+    </div>
+  </footer>
+
+  <!-- Librería de gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <script>
+    // Utilidades
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+    // Elementos
+    const elWeight = $('#weight');
+    const elHeight = $('#height');
+    const elAge = $('#age');
+    const elSex = $('#sex');
+    const btnCalc = $('#btnCalc');
+    const btnSave = $('#btnSave');
+    const btnSample = $('#btnSample');
+    const btnReset = $('#btnReset');
+    const btnExport = $('#btnExport');
+    const btnPrint = $('#btnPrint');
+    const btnOverlay = $('#btnOverlay');
+    const btnClearSaved = $('#btnClearSaved');
+
+    const imcValue = $('#imcValue');
+    const tmbValue = $('#tmbValue');
+    const imcTag = $('#imcTag');
+    const kcalLight = $('#kcalLight');
+    const kcalModerate = $('#kcalModerate');
+    const kcalIntense = $('#kcalIntense');
+    const savedList = $('#savedList');
+    const healthImpact = $('#healthImpact');
+
+    // Estado
+    let chartIMC = null;
+    let chartTMB = null;
+    let overlayActive = false;
+
+    // Validación simple
+    function readInputs(){
+      const w = parseFloat(elWeight.value);
+      const hcm = parseFloat(elHeight.value);
+      const age = parseInt(elAge.value, 10);
+      const sex = elSex.value;
+
+      const errors = [];
+      if(isNaN(w) || w < 20 || w > 300) errors.push('Peso fuera de rango (20–300 kg).');
+      if(isNaN(hcm) || hcm < 120 || hcm > 230) errors.push('Estatura fuera de rango (120–230 cm).');
+      if(isNaN(age) || age < 12 || age > 100) errors.push('Edad fuera de rango (12–100 años).');
+      if(!sex) errors.push('Selecciona el género.');
+
+      return {w, hcm, age, sex, errors};
+    }
+
+    // Cálculos
+    function calcIMC(kg, heightCm){
+      const m = heightCm / 100;
+      return kg / (m*m);
+    }
+
+    function mifflinTMB(kg, heightCm, age, sex){
+      // Mifflin–St Jeor
+      const base = 10*kg + 6.25*heightCm - 5*age;
+      return Math.round(sex === 'male' ? base + 5 : base - 161);
+    }
+
+    function activityBudgets(tmb){
+      // Aproximaciones de gasto total diario (TDEE)
+      const light = Math.round(tmb * 1.375);    // actividad ligera
+      const moderate = Math.round(tmb * 1.55);  // moderada
+      const intense = Math.round(tmb * 1.725);  // intensa
+      return {light, moderate, intense};
+    }
+
+    function imcCategory(imc){
+      if(imc < 18.5) return {label:'Bajo peso', class:'warn'};
+      if(imc < 25)   return {label:'Normal', class:'ok'};
+      if(imc < 30)   return {label:'Sobrepeso', class:'warn'};
+      return {label:'Obesidad', class:'risk'};
+    }
+
+    // Gráficos
+    function renderIMCChart(imc, savedOverlays=[]){
+      const ctx = document.getElementById('chartIMC');
+      const data = {
+        labels: ['Bajo', 'Normal', 'Sobrepeso', 'Obesidad'],
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Rangos IMC',
+            data: [18.5, 6.4, 5, 10], // alturas ilustrativas para mostrar secciones
+            backgroundColor: ['#fff5e6','#e8f5e9','#fff5e6','#fdecea'],
+            borderColor: ['#f5a623','#1e8e3e','#f5a623','#d0021b'],
+            borderWidth: 1
+          },
+          {
+            type: 'line',
+            label: 'Tu IMC',
+            data: [imc, imc, imc, imc],
+            borderColor: '#7a1f2b',
+            backgroundColor: '#7a1f2b',
+            tension: 0.3
+          },
+          ...savedOverlays.map((ov, i) => ({
+            type: 'line',
+            label: `Escenario ${ov.name}`,
+            data: [ov.imc, ov.imc, ov.imc, ov.imc],
+            borderColor: i % 2 === 0 ? '#611923' : '#a53240',
+            backgroundColor: 'transparent',
+            borderDash: [6,3],
+            tension: 0.3
+          }))
+        ]
+      };
+      const options = {
+        responsive: true,
+        plugins: {
+          legend: {position:'top'},
+          tooltip: {enabled:true}
+        },
+        scales: {
+          y: {beginAtZero:true, title:{display:true, text:'IMC aproximado'}},
+          x: {title:{display:true, text:'Categorías'}}
+        }
+      };
+      if(chartIMC) chartIMC.destroy();
+      chartIMC = new Chart(ctx, {data, options});
+    }
+
+    function renderTMBChart(tmb, budgets, savedOverlays=[]){
+      const ctx = document.getElementById('chartTMB');
+      const data = {
+        labels: ['TMB', 'Ligera', 'Moderada', 'Intensa'],
+        datasets: [
+          {
+            type:'bar',
+            label:'Kcal/día',
+            data:[tmb, budgets.light, budgets.moderate, budgets.intense],
+            backgroundColor: ['#7a1f2b','#e8f5e9','#fff5e6','#fdecea'],
+            borderColor: ['#611923','#1e8e3e','#f5a623','#d0021b'],
+            borderWidth:1
+          },
+          ...savedOverlays.map((ov, i) => ({
+            type:'line',
+            label:`Escenario ${ov.name}`,
+            data:[ov.tmb, ov.light, ov.moderate, ov.intense],
+            borderColor: i % 2 === 0 ? '#611923' : '#a53240',
+            backgroundColor: 'transparent',
+            borderDash: [6,3],
+            tension:0.2
+          }))
+        ]
+      };
+      const options = {
+        responsive:true,
+        plugins:{legend:{position:'top'}, tooltip:{enabled:true}},
+        scales:{y:{beginAtZero:true, title:{display:true,text:'kcal/día'}}, x:{title:{display:true,text:'Nivel de actividad'}}}
+      };
+      if(chartTMB) chartTMB.destroy();
+      chartTMB = new Chart(ctx, {data, options});
+    }
+
+    // Impacto de salud dinámico
+    function renderImpact(imc, budgets){
+      const cat = imcCategory(imc);
+      const items = [
+        {
+          label:'Composición corporal',
+          text: cat.label === 'Normal'
+            ? 'IMC dentro de rango suele asociarse a equilibrio entre masa grasa y magra.'
+            : 'IMC fuera de rango indica desbalance energético; conviene revisar hábitos.'
+        },
+        {
+          label:'Energía diaria',
+          text:`Tu TMB sugiere presupuestos calóricos aproximados entre ${budgets.light} y ${budgets.intense} kcal según actividad.`
+        },
+        {
+          label:'Riesgo cardiometabólico',
+          text: cat.label === 'Obesidad'
+            ? 'Mayor probabilidad de hipertensión, resistencia a la insulina y dislipidemias.'
+            : cat.label === 'Sobrepeso'
+              ? 'Riesgo moderado: buena oportunidad para intervenir con hábitos.'
+              : cat.label === 'Bajo peso'
+                ? 'Posible déficit nutricional; evaluar calidad y cantidad de la dieta.'
+                : 'Riesgo bajo asociado a IMC, mantener hábitos saludables.'
+        },
+        {
+          label:'Bienestar y rendimiento',
+          text:'Actividad física, sueño adecuado y alimentación balanceada mejoran energía, concentración y estado de ánimo.'
+        }
+      ];
+      healthImpact.innerHTML = items.map(i => `
+        <div class="item">
+          <div class="dot" aria-hidden="true"></div>
+          <div><strong>${i.label}:</strong> ${i.text}</div>
+        </div>
+      `).join('');
+    }
+
+    // Persistencia local
+    const KEY = 'escuela711_salud_escenarios';
+    function loadSaved(){
+      try{
+        return JSON.parse(localStorage.getItem(KEY) || '[]');
+      }catch(e){ return []; }
+    }
+    function saveScenario(name, data){
+      const all = loadSaved();
+      all.push({name, ...data, ts: Date.now()});
+      localStorage.setItem(KEY, JSON.stringify(all));
+      renderSavedList();
+    }
+    function clearSaved(){
+      localStorage.removeItem(KEY);
+      renderSavedList();
+    }
+    function renderSavedList(){
+      const all = loadSaved();
+      if(all.length === 0){
+        savedList.innerHTML = '<div class="small">Sin escenarios guardados.</div>';
+        return;
+      }
+      savedList.innerHTML = all.map((s,i)=>`
+        <div class="item">
+          <div class="dot" aria-hidden="true"></div>
+          <div>
+            <strong>${s.name}</strong> — IMC: ${s.imc.toFixed(1)}, TMB: ${s.tmb} kcal
+            <div class="small">Ligera: ${s.light} • Moderada: ${s.moderate} • Intensa: ${s.intense}</div>
+            <div class="actions" style="margin-top:8px">
+              <button class="ghost" data-load="${i}">Cargar</button>
+              <button class="ghost" data-del="${i}">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      // Bind buttons
+      $$('#savedList [data-load]').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const idx = parseInt(b.getAttribute('data-load'),10);
+          const s = loadSaved()[idx];
+          elWeight.value = s.w; elHeight.value = s.hcm; elAge.value = s.age; elSex.value = s.sex;
+          computeAndRender();
+        });
+      });
+      $$('#savedList [data-del]').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const idx = parseInt(b.getAttribute('data-del'),10);
+          const all = loadSaved();
+          all.splice(idx,1);
+          localStorage.setItem(KEY, JSON.stringify(all));
+          renderSavedList();
+        });
+      });
+    }
+
+    // Exportar
+    function exportData(){
+      const data = {
+        proyecto:'Salud y enfermedad — Escuela 711',
+        fecha: new Date().toISOString(),
+        escenarios: loadSaved()
+      };
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'escuela711_salud_escenarios.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Impresión
+    function printPage(){ window.print(); }
+
+    // Computar y renderizar
+    function computeAndRender(){
+      const {w,hcm,age,sex,errors} = readInputs();
+      if(errors.length){
+        alert('Revisa:\n• ' + errors.join('\n• '));
+        return;
+      }
+      const imc = calcIMC(w,hcm);
+      const tmb = mifflinTMB(w,hcm,age,sex);
+      const budgets = activityBudgets(tmb);
+
+      // UI
+      imcValue.textContent = imc.toFixed(1);
+      const cat = imcCategory(imc);
+      imcTag.className = 'badge ' + cat.class;
+      imcTag.textContent = cat.label;
+      tmbValue.textContent = tmb;
+      kcalLight.textContent = budgets.light;
+      kcalModerate.textContent = budgets.moderate;
+      kcalIntense.textContent = budgets.intense;
+
+      // Overlay datasets
+      const overlays = overlayActive ? loadSaved() : [];
+      renderIMCChart(imc, overlays);
+      renderTMBChart(tmb, budgets, overlays);
+      renderImpact(imc, budgets);
+    }
+
+    // Eventos
+    btnCalc.addEventListener('click', computeAndRender);
+    btnSave.addEventListener('click', ()=>{
+      const {w,hcm,age,sex,errors} = readInputs();
+      if(errors.length){ alert('No se puede guardar. ' + errors.join(' ')); return; }
+      const imc = calcIMC(w,hcm);
+      const tmb = mifflinTMB(w,hcm,age,sex);
+      const b = activityBudgets(tmb);
+      const name = prompt('Nombre del escenario (ej. "Antes", "Semana 1", "Después"):', 'Mi escenario');
+      if(!name) return;
+      saveScenario(name, {w,hcm,age,sex,imc,tmb,light:b.light,moderate:b.moderate,intense:b.intense});
+      if(overlayActive) computeAndRender();
+    });
+    btnSample.addEventListener('click', ()=>{
+      elWeight.value = 68.5;
+      elHeight.value = 172.0;
+      elAge.value = 15;
+      elSex.value = 'male';
+      computeAndRender();
+    });
+    btnReset.addEventListener('click', ()=>{
+      ['weight','height','age','sex'].forEach(id => document.getElementById(id).value = '');
+      imcValue.textContent = '—'; tmbValue.textContent = '—';
+      imcTag.textContent = '—'; imcTag.className = 'badge';
+      kcalLight.textContent = '—'; kcalModerate.textContent = '—'; kcalIntense.textContent = '—';
+      healthImpact.innerHTML = '';
+      if(chartIMC){ chartIMC.destroy(); chartIMC = null; }
+      if(chartTMB){ chartTMB.destroy(); chartTMB = null; }
+    });
+    btnExport.addEventListener('click', exportData);
+    btnPrint.addEventListener('click', printPage);
+    btnOverlay.addEventListener('click', ()=>{
+      overlayActive = !overlayActive;
+      btnOverlay.textContent = overlayActive ? 'Quitar superposición' : 'Superponer gráficos';
+      computeAndRender();
+    });
+    btnClearSaved.addEventListener('click', clearSaved);
+
+    // Inicializar
+    renderSavedList();
+  </script>
+</body>
+</html>
